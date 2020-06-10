@@ -1,5 +1,6 @@
 import random
-from gym.spaces import Discrete,Tuple
+import numpy as np
+from gym.spaces import Discrete,Tuple, Box
 
 from ray.rllib.env.multi_agent_env import MultiAgentEnv
 
@@ -12,6 +13,8 @@ class LOREnv1(MultiAgentEnv):
     The attack action is evaluated after any move action
     
     The observation has the followings.
+        - 2D position of self
+        - health of self
         - 2D position of the opponent
         - health of the opponent
     """
@@ -39,7 +42,7 @@ class LOREnv1(MultiAgentEnv):
     attak_power = 1
     
     # reward of win a game
-    game_award = 10
+    game_award = 100
     
     
     def generate_init_pos(self):
@@ -54,9 +57,19 @@ class LOREnv1(MultiAgentEnv):
     def __init__(self, config):
         self.action_space = Discrete(5)
         
-        # the observation is a tuple: [pos_x, pos_y, health]
+        # the observation is a tuple: [self_pos_x, self_pos_y, self.health, pos_x, pos_y, health]
         # start with a discrete space
-        self.observation_space = Tuple([Discrete(LOREnv1.space_size_n), Discrete(LOREnv1.space_size_n), Discrete(LOREnv1.max_health)])
+        self.observation_space = Tuple(
+            [
+                # self position in x/y
+                Box(low = 0, high = LOREnv1.space_size_n - 1, shape=(2, ), dtype=np.int16),
+                # opponent position in x/y
+                Box(low = 0, high = LOREnv1.space_size_n - 1, shape=(2, ), dtype=np.int16),
+                # self health and opponent health
+                Box(low = 0, high = LOREnv1.max_health, shape=(2, ), dtype=np.int16),
+                
+            ]
+        )
         
         self.player1 = "player1"
         self.player2 = "player2"
@@ -91,8 +104,20 @@ class LOREnv1(MultiAgentEnv):
         }
         
         return {
-            self.player1: [self.position[self.player1][0], self.position[self.player1][1], self.health[self.player1]],
-            self.player2: [self.position[self.player2][0], self.position[self.player2][1], self.health[self.player2]]
+            self.player1: tuple(
+                [
+                    np.array([self.position[self.player1][0], self.position[self.player1][1]]),
+                    np.array([self.position[self.player2][0], self.position[self.player2][1]]),
+                    np.array([self.health[self.player1], self.health[self.player2]])
+                ]
+            ),
+            self.player2: tuple(
+                [
+                    np.array([self.position[self.player2][0], self.position[self.player2][1]]),
+                    np.array([self.position[self.player1][0], self.position[self.player1][1]]),
+                    np.array([self.health[self.player2], self.health[self.player1]])
+                ]
+            )
         }
     
     def move_agent(self, player, opponent, action):
@@ -171,8 +196,20 @@ class LOREnv1(MultiAgentEnv):
             
         # get the new obs
         obs = {
-            self.player1: [self.position[self.player1][0], self.position[self.player1][1], self.health[self.player1]],
-            self.player2: [self.position[self.player2][0], self.position[self.player2][1], self.health[self.player2]]
+            self.player1: tuple(
+                [
+                    np.array([self.position[self.player1][0], self.position[self.player1][1]]),
+                    np.array([self.position[self.player2][0], self.position[self.player2][1]]),
+                    np.array([self.health[self.player1], self.health[self.player2]])
+                ]
+            ),
+            self.player2: tuple(
+                [
+                    np.array([self.position[self.player2][0], self.position[self.player2][1]]),
+                    np.array([self.position[self.player1][0], self.position[self.player1][1]]),
+                    np.array([self.health[self.player2], self.health[self.player1]])
+                ]
+            )
         }
         
         # get the reward        
