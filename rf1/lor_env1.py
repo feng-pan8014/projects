@@ -33,10 +33,10 @@ class LOREnv1(MultiAgentEnv):
     # (0, 0) is at the top left corner
     # x represents the vertical direction
     # y represents the horizontal direction
-    space_size_n = 5
+    space_size_n = 3
     
     # miss rate on any one attack
-    attack_miss_rate = 0.2
+    attack_miss_rate = 0.1
     
     # each attack takes some health
     attak_power = 1
@@ -93,6 +93,8 @@ class LOREnv1(MultiAgentEnv):
     # reset the env
     # return the initial observation
     def reset(self):
+        self.player1_init_pos, self.player2_init_pos = self.generate_init_pos()
+        
         self.position = {
                 self.player1: self.player1_init_pos,
                 self.player2: self.player2_init_pos
@@ -169,6 +171,19 @@ class LOREnv1(MultiAgentEnv):
         
         return attack_gain
     
+    def get_reward2(self, attack_gain_player1, attack_gain_player2):
+        if self.health[self.player1] <=0 and self.health[self.player2] > 0:
+            return [-1 * LOREnv1.max_health, LOREnv1.max_health]
+        
+        if self.health[self.player1] > 0 and self.health[self.player2] <= 0:
+            return [LOREnv1.max_health, -1 * LOREnv1.max_health]
+        
+        if self.health[self.player1] == 0 and self.health[self.player2] == 0:
+            return [-1 * LOREnv1.max_health, -1 * LOREnv1.max_health]
+        
+        return [attack_gain_player1, attack_gain_player2]
+        
+    
     
     # update state and observation based on the 2 actions
     def step(self, action_dict):        
@@ -212,7 +227,7 @@ class LOREnv1(MultiAgentEnv):
             )
         }
         
-        # get the reward        
+        # get the reward
         rew = {
             self.player1: self.get_reward(self.player1, self.player2, attack_gain_player1),
             self.player2: self.get_reward(self.player2, self.player1, attack_gain_player2),
