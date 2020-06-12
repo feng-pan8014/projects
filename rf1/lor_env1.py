@@ -150,9 +150,9 @@ class LOREnv1(MultiAgentEnv):
         
         
         hit =  0 if random.random() < LOREnv1.attack_miss_rate else 1
-        # attack is only valid if the two agents are adjacent (including diagonal)
-        if abs(self.position[player][0] - self.position[opponent][0]) <= 1 \
-            and abs(self.position[player][1] - self.position[opponent][1]) <= 1:
+        # attack is only valid if the two agents are adjacent (not diagonal)
+        if (self.position[player][0] == self.position[opponent][0] and abs(self.position[player][1] - self.position[opponent][1]) <= 1) \
+            or (self.position[player][1] == self.position[opponent][1] and abs(self.position[player][0] - self.position[opponent][0]) <= 1):
             self.health[opponent] = self.health[opponent] - hit * LOREnv1.attak_power
             
             return hit * LOREnv1.attak_power

@@ -36,3 +36,21 @@ def simulate(env, trainer1, trainer2, size):
         obv, reward, done, info = env.step({env.player1: a1, env.player2: a2})
     
     print_obv(env, obv, size)
+    
+def simulate2(env, trainer1, size):
+    obv = env.reset()
+    done = {"__all__" : False}
+    
+    while done["__all__"] == False:
+        a1 = trainer1.compute_action(observation = obv[env.player1], policy_id = "learned")
+        a2 = trainer1.compute_action(observation = obv[env.player2], policy_id = "LORHeuristic")
+        
+        
+        print_obv(env, obv, size)
+        print("".join(['*']*(size)) , end = " action ")
+        print(f"{bcolors.FAIL}{a1}{bcolors.ENDC}", end = " , ")
+        print(f"{bcolors.OKBLUE}{a2}{bcolors.ENDC}")
+        
+        obv, reward, done, info = env.step({env.player1: a1, env.player2: a2})
+    
+    print_obv(env, obv, size)
